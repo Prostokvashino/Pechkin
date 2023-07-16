@@ -1,0 +1,48 @@
+---
+title: "Pechkin"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(priceR)
+
+raw_data <- read_csv("data/2023-07-15.csv")
+with_prices_data <- raw_data %>% filter(!is.na(price))
+
+normalized_data <- with_prices_data %>% mutate(
+  `Новостройка` = case_when(
+    `Новостройка` == "Да" ~ TRUE,
+    `Новостройка` == "Нет" ~ FALSE
+  ),
+  
+  `Лифт` = ifelse(`Лифт` == "Есть", TRUE, FALSE),
+  price = str_replace_all(price, ",", ""),
+  amount = as.numeric(str_extract(price, "\\d+")),
+  currency = trimws(str_extract(price, "\\D+")),
+  currency = case_when(
+    currency == "$" ~ "USD",
+    currency == "֏" ~ "AMD",
+    currency == "€" ~ "EUR",
+    TRUE ~ currency
+  ),
+  price_usd = convert_currencies(price_start = amount, from=currency, to="USD"),
+  area = str_extract(`Общая площадь`, "\\d+"),
+  height = as.numeric(str_extract(`Высота потолков`, "\\d+(.\\d+)?"))
+) %>% select(-price, -amount, -currency, -`Общая площадь`, -`Высота потолков`)
+
+normalized_data
+```
+
+```{r}
+hex_plot <- normalized_data %>%
+  ggplot(aes(longitude, latitude, z=price_usd)) +
+  stat_summary_hex(alpha=0.8, bins=50) +
+  scale_fill_viridis_c() + 
+  labs(
+    fill = "mean",
+    title = "Price"
+  )
+hex_plot
+```
+
