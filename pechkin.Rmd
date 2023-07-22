@@ -46,3 +46,22 @@ hex_plot <- normalized_data %>%
 hex_plot
 ```
 
+```{r}
+library(osmdata)
+library(ggmap)
+
+yerevan_bb <- getbb("Kentron")
+
+yerevan_map <- get_stamenmap(yerevan_bb, zoom = 15)
+
+ggmap(yerevan_map) +
+  stat_summary_hex(
+    data = normalized_data,
+    aes(longitude, latitude, z = price_usd),
+    alpha = 0.5,
+    bins = 50
+  ) +
+  scale_fill_viridis_c() +
+  labs(fill = "mean",
+       title = "Price")
+```
