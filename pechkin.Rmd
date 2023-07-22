@@ -65,3 +65,26 @@ ggmap(yerevan_map) +
   labs(fill = "mean",
        title = "Price")
 ```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+set.seed(23072023)
+num_clusters <- 10
+
+clustered_df <- normalized_data %>%
+  select(latitude, longitude) %>%
+  kmeans(nstart = 25, centers = num_clusters)
+
+clustered <- normalized_data
+clustered$cluster <- as.factor(clustered_df$cluster)
+
+# Plot the clusters on a map
+ggplot(clustered, aes(x = longitude, y = latitude, color = cluster)) +
+  geom_point(size = 3) +
+  scale_color_brewer(palette = "Set1") +
+  labs(title = "Location Clustering")
+```
+```{r}
+clustered %>% filter(cluster %in% c(6,8))
+```
