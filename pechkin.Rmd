@@ -27,9 +27,11 @@ normalized_data <- with_prices_data %>% mutate(
     TRUE ~ currency
   ),
   price_usd = convert_currencies(price_start = amount, from=currency, to="USD"),
-  area = str_extract(`Общая площадь`, "\\d+"),
-  height = as.numeric(str_extract(`Высота потолков`, "\\d+(.\\d+)?"))
-) %>% select(-price, -amount, -currency, -`Общая площадь`, -`Высота потолков`)
+  area = as.numeric(str_extract(`Общая площадь`, "\\d+")),
+  height = as.numeric(str_extract(`Высота потолков`, "\\d+(.\\d+)?")),
+  rooms=parse_number(`Количество комнат`),
+  bathrooms=parse_number(`Количество санузлов`)
+) %>% select(-price, -amount, -currency, -`Общая площадь`, -`Высота потолков`, -`Количество комнат`, -`Количество санузлов`)
 
 normalized_data
 ```
@@ -86,5 +88,41 @@ ggplot(clustered, aes(x = longitude, y = latitude, color = cluster)) +
   labs(title = "Location Clustering")
 ```
 ```{r}
-clustered %>% filter(cluster %in% c(6,8))
+not_in_yerevan <- clustered %>% filter(cluster %in% c(6,8))
+not_in_yerevan
 ```
+```{r}
+apts_in_yerevan <- normalized_data %>% filter(!(id %in% not_in_yerevan$id))
+apts_in_yerevan %>%
+  ggplot(aes(longitude, latitude, z=price_usd)) +
+  stat_summary_hex(alpha=0.8, bins=50) +
+  scale_fill_viridis_c() + 
+  labs(
+    fill = "mean",
+    title = "Price"
+  )
+```
+```{r}
+library(patchwork)
+
+plot <- function(df, var, title) {
+  df %>%
+    ggplot(aes(longitude, latitude, z = {
+      {
+        var
+      }
+    })) +
+    stat_summary_hex(alpha = 0.8, bins = 50) +
+    scale_fill_viridis_c() +
+    labs(fill = "mean",
+         title = title)
+}
+
+(plot(apts_in_yerevan, price_usd, "Price") +
+    plot(apts_in_yerevan, area, "Area")) /
+  (
+    plot(apts_in_yerevan, rooms, "Rooms") +
+      plot(apts_in_yerevan, bathrooms, "Bathrooms")
+  )
+```
+
