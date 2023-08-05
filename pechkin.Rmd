@@ -34,8 +34,9 @@ normalized_data <- with_prices_data %>% mutate(
   bathrooms=parse_number(`Количество санузлов`),
   updated_at=parse_date_time(updated_at, "dmY HM"),
   posted_at=as_date(posted_at),
-  updated_at=as_date(updated_at)
-) %>% select(-price, -amount, -currency, -`Общая площадь`, -`Высота потолков`, -`Количество комнат`, -`Количество санузлов`)
+  updated_at=as_date(updated_at),
+  date=pmax(posted_at, updated_at, na.rm = TRUE)
+) %>% select(-price, -amount, -currency, -`Общая площадь`, -`Высота потолков`, -`Количество комнат`, -`Количество санузлов`, -posted_at, -updated_at)
 
 normalized_data %>% summarise(min_value=min(price_usd), max_value=max(price_usd), mean_value=mean(price_usd))
 ```
@@ -244,11 +245,10 @@ set.seed(20230729)
 yerevan_split <- apts_in_yerevan %>%
   select(-url, -price_usd, -location) %>%
   mutate(summary=str_to_lower(summary)) %>%
-  initial_split(strate=price_usd)
+  initial_split(strata=priceRange)
 
 yerevan_train <- training(yerevan_split)
 yerevan_test <- testing(yerevan_split)
-yerevan_metrics <- metric_set(accuracy, roc_auc, mn_log_loss)
 
 set.seed(29072023)
 yerevan_folds <- vfold_cv(yerevan_train, v=5, strata = priceRange)
@@ -266,7 +266,7 @@ yerevan_rec <-
   step_rm(summary) %>%
   step_mutate(`Новостройка`=as.numeric(`Новостройка`)) %>%
   step_mutate(`Лифт`=as.numeric(`Лифт`)) %>%
-  step_date(posted_at, updated_at, features = c("month", "year"), keep_original_cols = FALSE) %>%
+  step_date(date, features = c("month", "year"), keep_original_cols = FALSE) %>%
   step_novel(`Тип здания`, `Балкон`, `Мебель`, `Ремонт`) %>%
   step_unknown(`Тип здания`, `Балкон`, `Мебель`, `Ремонт`) %>%
   step_other(`Тип здания`, `Балкон`, `Мебель`, `Ремонт`, threshold = 0.02) %>%
@@ -365,4 +365,3 @@ extract_workflow(xgb_last) %>%
   extract_fit_parsnip() %>%
   vip(geom = "point", num_features = 20)
 ```
-
