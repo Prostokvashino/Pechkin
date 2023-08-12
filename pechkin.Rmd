@@ -104,10 +104,9 @@ clustered_df <- normalized_data %>%
 clustered <- normalized_data
 clustered$cluster <- as.factor(clustered_df$cluster)
 
-# Plot the clusters on a map
 ggplot(clustered, aes(x = longitude, y = latitude, color = cluster)) +
   geom_point(size = 3) +
-  scale_color_brewer(palette = "Set1") +
+  scale_color_brewer(palette = "Set3") +
   labs(title = "Location Clustering")
 ```
 ```{r}
