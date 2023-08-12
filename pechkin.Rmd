@@ -364,3 +364,18 @@ extract_workflow(xgb_last) %>%
   extract_fit_parsnip() %>%
   vip(geom = "point", num_features = 20)
 ```
+```{r}
+set.seed(20230812)
+apts_small <- apts_in_yerevan[sample(nrow(apts_in_yerevan), 1000),]
+
+apts_small_prep <- bake(prep(yerevan_rec), has_role("predictor"), new_data=apts_small, composition="matrix")
+
+head(apts_small_prep)
+```
+```{r}
+library(shapviz)
+shap <- shapviz(extract_fit_engine(xgb_last), X_pred=apts_small_prep)
+sv_importance(shap, kind = "both")
+```
+
+
