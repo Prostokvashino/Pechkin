@@ -42,22 +42,90 @@ normalized_data %>% summarise(min_value=min(price_usd), max_value=max(price_usd)
 ```
 
 ```{r}
+library(ggplot2)
 normalized_data %>%
-  filter(price_usd > 50000) %>% summarise(min_value=min(price_usd))
+  ggplot(aes(x = price_usd)) +
+  geom_density()
 ```
 
 ```{r}
-breaks <- c(50000, 100000, 150000, 200000, 300000, 500000, 1000000, 4000000)
+normalized_data %>%
+  filter(price_usd > 50000) %>% summarise(min_value=min(price_usd))
+```
+```{r}
+normalized_data %>%
+  filter(price_usd >= 25000, price_usd <= 1000000) %>%
+  summarise(
+    min_value = min(price_usd),
+    max_value = max(price_usd),
+    mean_value = mean(price_usd)
+  )
+```
+```{r}
+normalized_data <- normalized_data %>%
+  filter(price_usd >= 25000, price_usd <= 1000000) 
+```
+
+```{r}
+normalized_data %>%
+  ggplot(aes(x = price_usd)) +
+  geom_histogram(binwidth = 25000)
+```
+```{r}
+set.seed(20230820)
+
+kmeans_result <-
+  normalized_data %>% select(price_usd) %>% kmeans(centers = 10)
+
+normalized_data$cluster <- as.factor(kmeans_result$cluster)
+
+normalized_data %>%
+  group_by(cluster) %>%
+  summarize(min = min(price_usd), max = max(price_usd)) %>%
+  arrange(., min)
+```
+
+
+```{r}
+breaks <-
+  c(25000,
+    110000,
+    140000,
+    175000,
+    220000,
+    270000,
+    335000,
+    420000,
+    550000,
+    750000,
+    1000000)
 
 normalized_data <- normalized_data %>%
+  select(-cluster) %>%
   filter(price_usd > 50000) %>%
-  mutate(priceRange = cut(price_usd, breaks=breaks, lables=FALSE, include.lowest=TRUE, dig.lab=7))
+  mutate(
+    priceRange = cut(
+      price_usd,
+      breaks = breaks,
+      lables = FALSE,
+      include.lowest = TRUE,
+      dig.lab = 7
+    )
+  )
 
 normalized_data %>% count(priceRange)
 ```
 ```{r}
 normalized_data
 ```
+```{r}
+normalized_data %>%
+ggplot(aes(x = priceRange, y = price_usd)) +
+  geom_boxplot() +
+  scale_y_log10() +
+  labs(x = "range", y = "USD")
+```
+
 
 ```{r}
 hex_plot <- normalized_data %>%
@@ -110,7 +178,7 @@ ggplot(clustered, aes(x = longitude, y = latitude, color = cluster)) +
   labs(title = "Location Clustering")
 ```
 ```{r}
-not_in_yerevan <- clustered %>% filter(cluster %in% c(6,9))
+not_in_yerevan <- clustered %>% filter(cluster %in% c(3,4))
 not_in_yerevan
 ```
 ```{r}
@@ -124,6 +192,15 @@ apts_in_yerevan %>%
     title = "Price"
   )
 ```
+
+```{r}
+apts_in_yerevan %>%
+ggplot(aes(x = priceRange, y = price_usd)) +
+  geom_boxplot() +
+  scale_y_log10() +
+  labs(x = "range", y = "USD")
+```
+
 ```{r}
 library(patchwork)
 
@@ -339,7 +416,7 @@ xgb_last
 ```{r}
 collect_predictions(xgb_last) %>%
   mn_log_loss(priceRange,
-              `.pred_[50000,100000]`:`.pred_(1000000,4000000]`)
+              `.pred_[25000,110000]`:`.pred_(750000,1000000]`)
 ```
 ```{r}
 collect_predictions(xgb_last) %>%
@@ -350,7 +427,7 @@ collect_predictions(xgb_last) %>%
 ```{r}
 collect_predictions(xgb_last) %>%
   roc_curve(priceRange,
-            `.pred_[50000,100000]`:`.pred_(1000000,4000000]`) %>%
+            `.pred_[25000,110000]`:`.pred_(750000,1000000]`) %>%
   ggplot(aes(1 - specificity, sensitivity, color = .level)) +
   geom_abline(lty = 2, color = "gray80", size = 1.5) +
   geom_path(alpha = 0.8, size = 1.2) +
