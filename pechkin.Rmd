@@ -346,7 +346,7 @@ yerevan_rec <-
   step_novel(`Тип здания`, `Балкон`, `Мебель`, `Ремонт`) %>%
   step_unknown(`Тип здания`, `Балкон`, `Мебель`, `Ремонт`) %>%
   step_other(`Тип здания`, `Балкон`, `Мебель`, `Ремонт`, threshold = 0.02) %>%
-  step_dummy_extract(`Парковка`, `Бытовая техника`, `Виды из окон`, sep=", ") %>%
+  step_dummy_extract(`Парковка`, `Бытовая техника`, `Виды из окон`, `У дома есть`, sep=", ") %>%
   step_dummy(all_nominal_predictors()) %>%
   step_nzv(all_predictors())
 yerevan_rec
