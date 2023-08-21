@@ -40,6 +40,22 @@ normalized_data <- with_prices_data %>% mutate(
 
 normalized_data %>% summarise(min_value=min(price_usd), max_value=max(price_usd), mean_value=mean(price_usd))
 ```
+```{r}
+colSums(is.na(normalized_data))
+```
+
+```{r}
+normalized_data %>% filter(is.na(`Лифт`) & is.na(`Новостройка`))
+```
+
+```{r}
+normalized_data <- normalized_data %>% filter(id != 11710305)
+normalized_data$`Мебель` <- normalized_data$`Мебель` %>% replace_na("Unknown")
+normalized_data$`Парковка` <- normalized_data$`Парковка` %>% replace_na("No")
+normalized_data$`Бытовая техника` <- normalized_data$`Бытовая техника` %>% replace_na("Unknown")
+normalized_data$`Виды из окон` <- normalized_data$`Виды из окон` %>% replace_na("Unknown")
+normalized_data$`У дома есть` <- normalized_data$`У дома есть` %>% replace_na("Nothing")
+```
 
 ```{r}
 library(ggplot2)
@@ -178,7 +194,7 @@ ggplot(clustered, aes(x = longitude, y = latitude, color = cluster)) +
   labs(title = "Location Clustering")
 ```
 ```{r}
-not_in_yerevan <- clustered %>% filter(cluster %in% c(3,4))
+not_in_yerevan <- clustered %>% filter(cluster %in% c(6,8))
 not_in_yerevan
 ```
 ```{r}
